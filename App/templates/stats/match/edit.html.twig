@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Éditer les statistiques de {{ player.firstname }} {{ player.lastname }}{% endblock %}
+
+{% block body %}
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-6">Éditer les statistiques de {{ player.firstname }} {{ player.lastname }}</h1>
+
+        <div class="bg-white shadow-md rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4">Match : {{ battle.teamDomicile.name }} vs {{ battle.teamExterieur.name }}</h2>
+            <p class="text-gray-600">{{ battle.date|date('d/m/Y H:i') }} - {{ battle.lieu }}</p>
+        </div>
+
+        {{ form_start(form, {'attr': {'class': 'bg-white shadow-md rounded-lg p-6', 'id': 'player-stats-form'}}) }}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {# ... (reste du code du formulaire) ... #}
+        </div>
+        <div class="mt-6">
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Enregistrer</button>
+            <a href="{{ path('show_match_stats', {'id': battle.id}) }}" class="ml-4 text-gray-600 hover:underline">Annuler</a>
+        </div>
+        {{ form_end(form) }}
+    </div>
+
+    <script>
+        document.getElementById('player-stats-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            this.submit();
+            window.location.href = "{{ path('show_match_stats', {'id': battle.id}) }}";
+        });
+    </script>
+{% endblock %}

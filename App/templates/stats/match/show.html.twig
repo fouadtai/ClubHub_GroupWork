@@ -1,0 +1,144 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ teamDomicile.name }} vs {{ teamExterieur.name }} - Détails du match{% endblock %}
+
+{% block body %}
+    {% include '_templates/_nav.html.twig' %}
+
+    <div class="container mx-auto px-4 py-8 bg-gray-100">
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <!-- En-tête du match -->
+            <div class="bg-blue-800 text-white p-4 flex justify-between items-center">
+                <div class="text-sm">{{ battle.date|date('d/m/Y H:i', 'Europe/Paris') }}</div>
+                <div class="text-xl font-bold">{{ battle.lieu }}</div>
+                <div id="match-timer" class="text-xl font-bold">--:--</div>
+            </div>
+
+            <!-- Score et équipes -->
+            <div class="flex justify-between items-center p-6 bg-gray-50">
+                <div class="flex flex-col items-center w-2/5">
+                    <img src="{{ asset('images/team_logo.png') }}" alt="{{ teamDomicile.name }}" class="w-20 h-20 mb-2">
+                    <span class="text-xl font-bold text-center">{{ teamDomicile.name }}</span>
+                </div>
+                <div class="text-center">
+                    <div class="text-6xl font-bold mb-2">
+                        {{ battle.scoreDomicile }} - {{ battle.scoreExterieur }}
+                    </div>
+                    <div id="match-status" class="text-sm text-gray-600 font-semibold">
+                        Chargement...
+                    </div>
+                </div>
+                <div class="flex flex-col items-center w-2/5">
+                    <img src="{{ asset('images/team_logo.png') }}" alt="{{ teamExterieur.name }}" class="w-20 h-20 mb-2">
+                    <span class="text-xl font-bold text-center">{{ teamExterieur.name }}</span>
+                </div>
+            </div>
+
+            <!-- Événements du match -->
+            <div class="p-6 relative">
+                <h2 class="text-2xl font-bold mb-6 text-center text-blue-800">Chronologie du match</h2>
+                <div class="flex">
+                    <!-- Équipe domicile -->
+                    <div class="w-1/2 pr-4">
+                        <ul class="space-y-4">
+                            {% for event in events %}
+                                {% if event.player in playersDomicile|map(p => p.firstname ~ ' ' ~ p.lastname) %}
+                                    <li class="flex items-center justify-end">
+                                        <div class="bg-blue-100 rounded-lg py-2 px-4 shadow-md flex items-center">
+                                            <span class="text-xs font-semibold bg-blue-200 rounded-full px-2 py-1 mr-2">{{ (event.time|split(':')[0]|number_format + 1) ~ "'" }}</span>
+                                            <span class="font-semibold mr-2">{{ event.player }}</span>
+                                            {% if event.type == 'goal' %}
+                                                <span class="text-green-600 text-lg">⚽</span>
+                                            {% elseif event.type == 'yellowCard' %}
+                                                <span class="text-yellow-500 text-lg">🟨</span>
+                                            {% elseif event.type == 'redCard' %}
+                                                <span class="text-red-600 text-lg">🟥</span>
+                                            {% endif %}
+                                        </div>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- Séparateur -->
+                    <div class="w-px bg-gray-300 mx-2"></div>
+
+                    <!-- Équipe extérieur -->
+                    <div class="w-1/2 pl-4">
+                        <ul class="space-y-4">
+                            {% for event in events %}
+                                {% if event.player in playersExterieur|map(p => p.firstname ~ ' ' ~ p.lastname) %}
+                                    <li class="flex items-center">
+                                        <div class="bg-red-100 rounded-lg py-2 px-4 shadow-md flex items-center">
+                                            <span class="text-xs font-semibold bg-red-200 rounded-full px-2 py-1 mr-2">{{ (event.time|split(':')[0]|number_format + 1) ~ "'" }}</span>
+                                            {% if event.type == 'goal' %}
+                                                <span class="text-green-600 text-lg">⚽</span>
+                                            {% elseif event.type == 'yellowCard' %}
+                                                <span class="text-yellow-500 text-lg">🟨</span>
+                                            {% elseif event.type == 'redCard' %}
+                                                <span class="text-red-600 text-lg">🟥</span>
+                                            {% endif %}
+                                            <span class="font-semibold ml-2">{{ event.player }}</span>
+                                        </div>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-10 text-center">
+            <a href="{{ path('planning_match_list') }}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out inline-block">
+                Retour à la liste des matchs
+            </a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var matchDate = new Date("{{ battle.date|date('Y-m-d H:i:s', 'Europe/Paris') }}");
+            var now = new Date();
+            var timeDiff = now - matchDate;
+            var minutes = Math.floor(timeDiff / 60000);
+            var seconds = Math.floor((timeDiff % 60000) / 1000);
+            var statusElement = document.getElementById('match-status');
+            var timerElement = document.getElementById('match-timer');
+
+            function updateTimer() {
+                if (minutes >= 90) {
+                    timerElement.textContent = "90:00";
+                    statusElement.textContent = "Terminé";
+                } else if (minutes >= 45 && minutes < 60) {
+                    timerElement.textContent = "Mi-temps";
+                    statusElement.textContent = "Mi-temps";
+                } else {
+                    var displayMinutes = minutes < 45 ? minutes : minutes - 15;
+                    timerElement.textContent =
+                        (displayMinutes < 10 ? "0" : "") + displayMinutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+                    statusElement.textContent = "En cours";
+                    seconds++;
+                    if (seconds >= 60) {
+                        minutes++;
+                        seconds = 0;
+                    }
+                    setTimeout(updateTimer, 1000);
+                }
+            }
+
+            if (now >= matchDate) {
+                if (minutes < 90) {
+                    updateTimer();
+                } else {
+                    timerElement.textContent = "90:00";
+                    statusElement.textContent = "Terminé";
+                }
+            } else {
+                timerElement.textContent = "À venir";
+                statusElement.textContent = "Match à venir";
+            }
+        });
+    </script>
+{% endblock %}
